@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Ramus 2.2 guide</title>
+<style>
+	html {
+		Font-family: serif;
+		Font-size: 16pt;
+		Color: midnightblue;
+		Background-color: tan;
+	}
+	
+	h1, h2 {
+                Font-family: sans-serif;
+                Color: saddlebrown;
+                Border-bottom: 2px solid saddlebrown;
+                Padding: 1ex 0;
+        }
+	
+	body {
+		Width: 70ex;
+		Max-width: 80%;
+		Padding: 3ex;
+		Margin: 1ex auto;
+		Line-height: 1.5em;
+		Text-align: justify;
+		Background-color: white;
+		Box-shadow: 0.5ex 0.5ex 0.5ex saddlebrown;
+	}
+	pre code { Font-size: 0.85em; Overflow: auto; }
+		
+	a { Color: blue; }
+	a:visited { Color: purple; }
+	a:hover, a:active { Color: cyan; }
+	
+	#transcript { Min-height: 25em; }
+	#transcript hr { Border: 1px solid saddlebrown; }
+	
+	footer {
+                Border-top: 2px solid saddlebrown;
+                Font-variant: small-caps;
+                Text-align: right;
+                Padding: 1ex 0;
+	}
+	footer #status { Float: left; }
+</style>
+<meta name="viewport" content="width=device-width">
+<meta name="creator" content="No Time To Play">
+
+<h1>Ramus 2.2 guide</h1>
+
+<div role="log" id="transcript">Please enable Javascript to play.</div>
+
+<footer role="status">
+ <span id="status"></span>
+ Moves:&nbsp;<span id="moves">0</span>
+ <!--Score:&nbsp;<span id="score">0</span>/0-->
+</footer>
+
+<div style="Display: none;">
+
+<div id="start" title="Introduction">
+ <p>Ramus is a template for hypertext fiction or games self-contained in a single web page. Emphasis on template: to make your own, simply replace the content of an existing document. As long as <a href="#elements">certain elements</a> are left in place, it should continue to function as before.
+ 
+ <p>You need to <a href="#html">know HTML</a> to work with Ramus. It's not for everyone.
+ 
+ <p>As of 20 April 2020, this guide is only intended to give you a quick overview.
+</div>
+
+<div id="html">
+ <p>Ramus documents are made of many little fragments, usually simple <code>div</code> elements. All they need to have is an ID, so you can point links at them. In Ramus 2.1, <a rel="continue" href="#links">links had all the power</a>.
+ 
+ <p>That changed in version 2.2 with the addition of a little <a href="#scripting">scripting language</a>, that also hijacks standard HTML elements (and also with the option of leaving them alone if you say so).
+</div>
+
+<div id="elements" title="HTML elements">
+ <p>The only mandatody elements in a Ramus document are some sort of container with "transcript" as ID (you can change that, see below) and the script at the end. You'll also want a hidden section to keep the story fragments until they're needed. There should be at least one such fragment with "start" as ID (you can change that also, at the top of the script).
+ 
+ <p>As of version 2.1, there's also an optional <a href="#status-line">status line</a> that can be used to keep track of progress if at all desirable. Last but not least, Ramus now keeps track of <a href="#visited">visited fragments</a>.
+ 
+ <p>The script is kept relatively short on purpose, and should be the last thing in the file, so you can copy it elsewhere easily. Feel free to customize it as needed.
+</div>
+
+<div id="links" title="Links">
+ <p>To provide interactivity, Ramus hijacks most links for its own use. To link between fragments, simply use a hash sign and its ID. 
+ 
+ <p>There are several kinds of links, set apart by custom values of the <code>rel</code> attribute: "append" (the default), "continue", "clear", "reset", and "external". For defails, see the link type reference included separately.
+ 
+ <p>Note: as of version 2.2, reset links <em>don't</em> clear variables set by the <a href="#scripting">scripting language</a>; also, unlike the others, external links are actually part of the standard HTML <a rel="external" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Link_types">link types</a>.
+</div>
+
+<div id="status-line" title="The status line">
+ <p>The status line is in fact comprised of three separate elements, whose IDs are "status", "moves" and "score", respectively. They can be placed anywhere in the document, or even removed entirely. Here's how they work:
+ 
+ <p>The <b>status</b> text is taken from the <var>title</var> element of each story fragment as it's visited, if one is present at all; otherwise it's not changed.
+ 
+ <p>The <b>move counter</b> is incremented every time the player follows a link.
+ 
+ <p>The <b>score</b> is incremented whenever the player visits a passage with the <var>data-score</var> attribute.
+ 
+ <p>Scoring requires a relatively modern browser to work.
+</div>
+
+<div id="visited" title="Visited fragments">
+ <p>Ramus keeps track of which story fragments were already visited, and adds the "visited" or "unvisited" class to their containers as they are displayed. You can use styling to show or hide parts of them accordingly.
+ 
+ <p>This feature requires a relatively modern browser to work; otherwise visits will still be noted, but without any visual changes.
+</div>
+
+<div id="scripting" title="Scripting language">
+ <p>As of version 2.2, Ramus includes a little scripting language. It's kind of clunky and doesn't have a name yet. The goal was to make something easy to use while keeping Ramus not too large. Here's a small sample:
+ 
+<pre><code>
+	&lt;s&gt;set a 1&lt;/s&gt; &lt;s&gt;echo $a&lt;/s&gt;
+	&lt;s&gt;test $a = 1&lt;/s&gt;
+		&lt;s&gt;iftrue echo Is too!&lt;/s&gt;
+		&lt;s&gt;iffalse echo Is not!&lt;/s&gt;
+</code></pre>
+
+ <p>For more details, see the scripting reference included separately. Scripts should work in any browser released from 2011 onward.
+</div>
+
+</div>
+
+<!-- You shouldn't need to edit below this line. -->
+
+<script>
+var START = "start";
+var TRANS = "transcript";
+var transcript = null;
+
+var status_line = null;
+var moves_line = null;
+var score_line = null;
+
+var moves = 0;
+var score = {};
+var visited = {};
+
+window.addEventListener("load", function () {
+	"use strict";
+	
+	status_line = document.getElementById("status");
+	moves_line = document.getElementById("moves");
+	score_line = document.getElementById("score");
+	transcript = document.getElementById(TRANS);
+	var start = document.getElementById(START);
+	transcript.innerHTML = "";
+	advanceStory(start);
+});
+
+function advanceStory(fragment) {
+	var clone = fetchFragment(fragment);
+	if (status_line !== null && clone.title !== "") {
+		status_line.innerText = clone.title;
+		clone.removeAttribute("title");
+	}
+	transcript.appendChild(clone);
+	clone.scrollIntoView({behavior: "smooth"});
+}
+
+function fetchFragment(fragment) {
+	var clone = fragment.cloneNode(true);
+	var links = clone.getElementsByTagName("a");
+	setVisited(clone);
+	scoreFragment(clone);
+	substCommands(clone);
+	setupLinks(links);
+	clone.removeAttribute("id"); // No duplicates in document.
+	return clone;
+}
+
+function setVisited(fragment) {
+	if (fragment.classList === undefined) {
+		// Do nothing.
+	} else if (fragment.classList.add === undefined) {
+		// Do nothing.
+	} else if (visited[fragment.id]) {
+		fragment.classList.add("visited");
+	} else {
+		fragment.classList.add("unvisited");
+	}
+	visited[fragment.id] = true;
+}
+
+function scoreFragment(fragment) {
+	if (fragment.dataset === undefined) {
+		return;
+	} else if (fragment.dataset.score === undefined) {
+		return;
+	} else {
+		score[fragment.id] = parseInt(fragment.dataset.score);
+		var total = 0;
+		for (var i in score)
+			total += score[i];
+		if (score_line !== null)
+			score_line.innerText = total;
+	}
+}
+
+function setupLinks(links) {
+	for (var i = 0; i < links.length; i++) {
+		if (links[i].rel !== "external") {
+			links[i].addEventListener("click", linkCallback);
+			links[i].addEventListener("keydown", linkCallback);
+		}
+	}
+}
+
+function clearLinks(links) {
+	for (var i = 0; i < links.length; i++) {
+		if (links[i].rel !== "external") {
+			clearOneLink(links[i]);
+			i--;
+		}
+	}
+}
+
+function clearOneLink(element) {
+	element.outerHTML = element.innerHTML;
+}
+
+function linkCallback(event) {
+	var target_id = this.hash.slice(1);
+	var target = document.getElementById(target_id);
+	if (target === null) {
+		alert("Broken link!");
+		return;
+	}
+	moves++;
+	if (moves_line !== null)
+		moves_line.innerText = moves;
+	if (this.rel === "clear") {
+		transcript.innerHTML = "";
+	} else if (this.rel === "continue") {
+		clearLinks(transcript.getElementsByTagName("a"));
+		transcript.appendChild(document.createElement("hr"));
+	} else if (this.rel === "reset") {
+		if (status_line !== null) status_line.innerHTML = "";
+		if (moves_line !== null) moves_line.innerHTML = "0";
+		if (score_line !== null) score_line.innerHTML = "0";
+		
+		transcript.innerHTML = "";
+		moves = 0;
+		score = {};
+		visited = {};
+	} else {
+		clearOneLink(this);
+	}
+	advanceStory(target);
+	event.preventDefault();
+}
+
+// Micro-interpreter for a very simple command language.
+
+var variables = {};
+var commands = {};
+var test_flag = undefined;
+
+function substCommands(fragment) {
+	var comments = fragment.getElementsByTagName("s");
+	for (var i = 0; i < comments.length; i++) {
+		if (comments[i].attributes.length > 0)
+			continue;
+		var c = comments[i];
+		var result = evalCommand(parseCommand(c.innerText));
+		if (!(result instanceof Node))
+			result = document.createTextNode(
+				result.toString());
+		c.parentNode.replaceChild(result, c);
+		i--;
+	}
+}
+
+function parseCommand(text) {
+	return text.trim().split(/\s+/).map(parseValue);
+}
+
+function parseValue(text) {
+	if (text[0] === '$')
+		return variables[text.slice(1)];
+	var num = parseFloat(text);
+	return isNaN(num) ? text : num;
+}
+
+function evalCommand(args) {
+	if (args.length === 0) {
+		console.warn("Empty command!");
+		return "";
+	} else if (args[0] in commands) {
+		return commands[args[0]].apply(null, args.slice(1));
+	} else {
+		console.warn("Command not found: " + args[0]);
+		return "";
+	}
+}
+
+commands["set"] = function () {
+	variables[arguments[0]] = arguments[1];
+	return "";
+};
+
+commands["echo"] = function () {
+	var args = Array.prototype.slice.call(arguments);
+	return args.join(" ");
+};
+
+commands["test"] = function () {
+	if (arguments.length === 2) {
+		if (arguments[0] === "visited") {
+			test_flag = arguments[1] in visited;
+		} else {
+			console.warn("Bad check in `test`: "
+				+ arguments[0]);
+			test_flag = undefined;
+		}
+	} else if (arguments.length === 3) {
+		// Perform loose comparisons to help out authors.
+		if (arguments[1] === "=" || arguments[1] === "==") {
+			test_flag = arguments[0] == arguments[2];
+		} else if (arguments[1] === "!=") {
+			test_flag = arguments[0] != arguments[2];
+		} else if (arguments[1] === "!=") {
+			test_flag = arguments[0] != arguments[2];
+		} else if (arguments[1] === "<") {
+			test_flag = arguments[0] < arguments[2];
+		} else if (arguments[1] === "<=") {
+			test_flag = arguments[0] <= arguments[2];
+		} else if (arguments[1] === ">") {
+			test_flag = arguments[0] > arguments[2];
+		} else if (arguments[1] === ">=") {
+			test_flag = arguments[0] >= arguments[2];
+		} else {
+			console.warn("Bad comparison in `test`: "
+				+ arguments[1]);
+			test_flag = undefined;
+		}
+	} else {
+		console.warn("`test` expects 2 or 3 arguments.");
+		test_flag = undefined;
+	}
+	return "";
+};
+
+commands["iftrue"] = function () {
+	if (test_flag) {
+		var args = Array.prototype.slice.call(arguments);
+		return evalCommand(args);
+	} else {
+		return "";
+	}
+};
+
+commands["iffalse"] = function () {
+	if (test_flag === false) {
+		var args = Array.prototype.slice.call(arguments);
+		return evalCommand(args);
+	} else {
+		// Don't take either branch in case of test error.
+		return "";
+	}
+};
+
+commands["include"] = function () {
+	var target = document.getElementById(arguments[0]);
+	if (target !== null) {
+		return fetchFragment(target);
+	} else {
+		console.warn("Bad include: " + arguments[0]);
+		return "";
+	}
+};
+</script>

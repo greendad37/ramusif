@@ -1,0 +1,40 @@
+html {
+		Font-family: serif;
+		Font-size: 16pt;
+		Color: midnightblue;
+		Background-color: tan;
+	}
+	
+	h1, h2 {
+                Font-family: sans-serif;
+                Color: saddlebrown;
+                Border-bottom: 2px solid saddlebrown;
+                Padding: 1ex 0;
+        }
+	
+	body {
+		Width: 70ex;
+		Max-width: 80%;
+		Padding: 3ex;
+		Margin: 1ex auto;
+		Line-height: 1.5em;
+		Text-align: justify;
+		Background-color: white;
+		Box-shadow: 0.5ex 0.5ex 0.5ex saddlebrown;
+	}
+	pre code { Font-size: 0.85em; Overflow: auto; }
+		
+	a { Color: blue; }
+	a:visited { Color: purple; }
+	a:hover, a:active { Color: cyan; }
+	
+	#transcript { Min-height: 25em; }
+	#transcript hr { Border: 1px solid saddlebrown; }
+	
+	footer {
+                Border-top: 2px solid saddlebrown;
+                Font-variant: small-caps;
+                Text-align: right;
+                Padding: 1ex 0;
+	}
+	footer #status { Float: left; }
